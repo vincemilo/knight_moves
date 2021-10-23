@@ -1,85 +1,54 @@
 class Board
-  attr_accessor :tiles, :row, :loop
+  attr_accessor :tiles
 
   def initialize
-    @row = Array.new(8, 0)
-    @loop = 0
-    @tiles = Array.new(8) { Array.new(8) { |e| [make_grid, e] } }
-  end
-
-  def make_grid
-    if @row.empty?
-      @loop += 1
-      @row = Array.new(8, @loop)
-    end
-    @row.shift
+    @tiles = (0..7).to_a.repeated_permutation(2).to_a
   end
 end
 
 class Knight
-  attr_accessor :moves
+  attr_accessor :moves, :moves2, :children, :position
 
-  def initialize
+  def initialize(position)
     @moves = [[2, 1], [1, 2], [-1, 2], [-2, 1], [-2, -1], [-1, -2], [1, -2], [2, -1]]
+    @moves2 = Hash[@moves.collect do |e|
+      neg = [e[0], e[1] * -1]
+      [e, neg.reverse]
+    end]
+    @position = position
   end
 end
 
-class Tree
-  attr_accessor :root, :data
-
-  def initialize(arr)
-    @data = arr.uniq.sort
-    @root = build_tree(data)
-  end
-
-  class Node
-    attr_accessor :data, :left, :right
-
-    def initialize(data)
-      @data = data
-      @left = nil
-      @right = nil
-    end
-  end
-
-  def build_tree(arr)
-    return nil if arr.empty?
-
-    mid = (arr.length - 1) / 2
-    root = Node.new(arr[mid])
-    root.left = build_tree(arr[0...mid])
-    root.right = build_tree(arr[(mid + 1)..-1])
-    root
-  end
-
-  def pretty_print(node = @root, prefix = '', is_left = true)
-    pretty_print(node.right, "#{prefix}#{is_left ? '│   ' : '    '}", false) if node.right
-    puts "#{prefix}#{is_left ? '└── ' : '┌── '}#{node.data}"
-    pretty_print(node.left, "#{prefix}#{is_left ? '    ' : '│   '}", true) if node.left
-  end
-
-  def find(val, node = root)
-    return node if node.nil? || node.data == val
-
-    if val < node.data
-      find(val, node.left)
-    else
-      find(val, node.right)
-    end
-  end
-
-  def knight_moves(start_point, end_point, node = root)
-    return start_point if start_point == end_point
-
-    p node.data
-    p start_point
-    p end_point
-  end
+def valid_move?(x, y, history)
+  x.negative? || y.negative? || x > 7 || y > 7 || history.include?([x, y]) ? false : true
 end
 
-board = Board.new
-p board.tiles
-knight = Knight.new
-bst = Tree.new(knight.moves)
-bst.pretty_print
-bst.knight_moves([0, 0], [1, 2])
+def knight_moves(start_point, end_point, history = [])
+  history.push(start_point)
+  valid_moves = []
+  knight = Knight.new(start_point)
+  #board = Board.new
+  # placement = board.tiles.map { |e| e == knight.position ? 'K' : e }
+  # p placement
+  # p knight.position
+  queue = knight.moves2
+  queue.each do |e|
+    x = knight.position[0] + e[1][0]
+    y = knight.position[1] + e[1][1]
+    # p [x, y]
+    # p end_point
+    if end_point == [x, y]
+      history.push([e])
+    # puts "You made it in #{history.length - 1} move(s)! Here's your path:"
+    elsif valid_move?(x, y, history)
+      valid_moves.push(e)
+    end
+  end
+  p valid_moves
+  # p history
+end
+
+def find_shortest_path(start_point, end_point)
+end
+
+knight_moves([1, 2], [3, 3])
